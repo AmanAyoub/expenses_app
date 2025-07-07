@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 const { Client } = require('pg');
 const { argv } = require('node:process');
 const COMMAND = argv[2];
@@ -16,28 +17,36 @@ search QUERY - list expenses with a matching memo field
 `;
 
 async function listExpenses() {
-  await client.connect();
+  await client.connect().catch(error => logAndExit(error));
 
-  let data = await client.query('SELECT * FROM expenses ORDER BY created_on ASC');
+  let data = await client.query('SELECT * FROM expenses ORDER BY created_on ASC')
+    .catch(error => logAndExit(error));
   data.rows.forEach(row => {
     let { id, amount, memo, created_on } = row;
     console.log(`${String(id).padStart(3)} | ${created_on.toDateString().padStart(10)} | ${amount.padStart(12)} | ${memo}`);
   });
 
-  client.end();
+  client.end().catch(error => logAndExit(error));
+}
+
+async function addExpense(amount, memo) {
+  await client.connect().catch(error => logAndExit(error));
+  let date = (new Date()).toLocaleDateString();
+  let query = 'INSERT INTO expenses (amount, memo, created_on) VALUES ($1, $2, $3) RETURNING *';
+  let values = [amount, memo, date];
+  await client.query(query, values)
+    .catch(error => logAndExit(error));
+  client.end().catch(error => logAndExit(error));
 }
 
 function displayHelpContent() {
   console.log(HELP_CONTENT);
 }
 
-async function addExpense(amount, memo) {
-  await client.connect();
-  let date = (new Date()).toLocaleDateString();
-  await client.query(`INSERT INTO expenses (amount, memo, created_on) VALUES (${amount}, '${memo}', '${date}')`);
-  client.end();
+function logAndExit(error) {
+  console.log(error);
+  process.exit(1);
 }
-
 
 
 if (COMMAND === 'list') {
