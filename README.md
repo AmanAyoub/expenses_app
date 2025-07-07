@@ -1,1 +1,1 @@
-# expenses_app
+An application for tracking expenses
