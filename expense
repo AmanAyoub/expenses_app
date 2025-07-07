@@ -31,8 +31,24 @@ function displayHelpContent() {
   console.log(HELP_CONTENT);
 }
 
+async function addExpense(amount, memo) {
+  await client.connect();
+  let date = (new Date()).toLocaleDateString();
+  await client.query(`INSERT INTO expenses (amount, memo, created_on) VALUES (${amount}, '${memo}', '${date}')`);
+  client.end();
+}
+
+
+
 if (COMMAND === 'list') {
   listExpenses();
+} else if (COMMAND === 'add') {
+  let [ amount, memo ] = argv.slice(3);
+  if (amount && memo) {
+    addExpense(amount, memo);
+  } else {
+    console.log('You must provide an amount and memo.');
+  }
 } else {
   displayHelpContent();
 }
