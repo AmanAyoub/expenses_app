@@ -30,7 +30,11 @@ class ExpenseData {
 
     let data = await this.client.query('SELECT * FROM expenses ORDER BY created_on ASC')
       .catch(error => logAndExit(error));
+    this.displayCount(data.rowCount);
     this.displayExpenses(data);
+    if (data.rowCount > 1) {
+      this.displayTotal(data.rows);
+    }
 
     await this.client.end().catch(error => logAndExit(error));
   }
@@ -40,7 +44,12 @@ class ExpenseData {
     let query = 'SELECT * FROM expenses WHERE memo ILIKE $1';
     let data = await this.client.query(query, [`%${searchTerm}%`])
       .catch(error => logAndExit(error));
+    this.displayCount(data.rows);
     this.displayExpenses(data);
+    if (data.rowCount > 1) {
+      this.displayTotal(data.rows);
+    }
+
     await this.client.end().catch(error => logAndExit(error));
   }
 
@@ -74,6 +83,22 @@ class ExpenseData {
     console.log('All expenses have been deleted.');
   
     await this.client.end().catch(error => logAndExit(error));
+  }
+
+  displayCount(rowCount) {
+    if (rowCount === 0) {
+      console.log('There are no expenses.');
+    } else if (rowCount === 1) {
+      console.log('There is 1 expense.');
+    } else {
+      console.log(`There are ${rowCount} expenses.`);
+    }
+  }
+
+  displayTotal(rows) {
+    let total = rows.reduce((acc, row) => acc + Number(row.amount), 0);
+    console.log('--------------------------------------------------');
+    console.log(`Total ${String(total).padStart(30)}`);
   }
 }
 
